@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>false</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.*" />
+    <None Remove="$(NuGetPackageRoot)microsoft.web.webview2\**\Microsoft.Web.WebView2.Wpf.dll" />
+    <ReferencePath Remove="$(NuGetPackageRoot)microsoft.web.webview2\**\Microsoft.Web.WebView2.Wpf.dll" />
+    <EmbeddedResource Include="Resources\score.html" />
+  </ItemGroup>
+</Project>
