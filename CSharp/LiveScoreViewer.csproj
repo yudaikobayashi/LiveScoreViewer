@@ -14,5 +14,7 @@
     <None Remove="$(NuGetPackageRoot)microsoft.web.webview2\**\Microsoft.Web.WebView2.Wpf.dll" />
     <ReferencePath Remove="$(NuGetPackageRoot)microsoft.web.webview2\**\Microsoft.Web.WebView2.Wpf.dll" />
     <EmbeddedResource Include="Resources\score.html" />
+    <EmbeddedResource Include="Resources\score.js" />
+    <EmbeddedResource Include="Resources\osmd.js" />
   </ItemGroup>
 </Project>

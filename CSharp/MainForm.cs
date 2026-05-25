@@ -12,6 +12,13 @@ public record NoteData(
     double duration
 );
 
+public record ScoreData(
+    List<NoteData> notes,
+    int scaleRoot,
+    string scaleName,
+    double clipStart
+);
+
 public partial class MainForm : Form
 {
     private const int port_number = 63253;
@@ -20,6 +27,7 @@ public partial class MainForm : Form
     private SplitContainer splitContainer;
     private WebView2 scoreWebView2;
     private TextBox logTextBox;
+    private Button clearLogButton;
 
     public MainForm()
     {
@@ -51,6 +59,10 @@ public partial class MainForm : Form
             Font = new Font("Consolas", 10)
         };
 
+        var contextMenu = new ContextMenuStrip();
+        contextMenu.Items.Add("Clear", null, (_, _) => logTextBox.Clear());
+        logTextBox.ContextMenuStrip = contextMenu;
+
         splitContainer.Panel2.Controls.Add(logTextBox);
 
         udpClient = new UdpClient(port_number);
@@ -68,18 +80,17 @@ public partial class MainForm : Form
                 await udpClient.ReceiveAsync();
 
             string text = Encoding.UTF8.GetString(result.Buffer);
-
             text = text.TrimEnd(',', '\0', '\r', '\n');
 
             try
             {
-                List<NoteData>? notes =
-                    JsonSerializer.Deserialize<List<NoteData>>(text);
+                ScoreData? scoreData =
+                    JsonSerializer.Deserialize<ScoreData>(text);
 
-                if (notes == null)
+                if (scoreData == null)
                     continue;
 
-                foreach (NoteData note in notes)
+                foreach (NoteData note in scoreData.notes)
                 {
                     AppendLog(
                         $"pitch = {note.pitch,3}  " +
@@ -87,6 +98,11 @@ public partial class MainForm : Form
                         $"duration = {$"{note.duration:0.###}".PadRight(5),8}"
                     );
                 }
+
+                AppendLog($"scaleRoot = {scoreData.scaleRoot}  scaleName = {scoreData.scaleName}");
+
+                string json = JsonSerializer.Serialize(scoreData);
+                UpdateScore(json);
             }
             catch (Exception ex)
             {
@@ -119,7 +135,14 @@ public partial class MainForm : Form
             )
         );
         await scoreWebView2.EnsureCoreWebView2Async(env);
-        scoreWebView2.NavigateToString(LoadHtml("score.html"));
+        scoreWebView2.CoreWebView2.OpenDevToolsWindow();
+
+        string html = LoadHtml("score.html");
+        string osmd = LoadHtml("osmd.js");
+        string scoreJs = LoadHtml("score.js");
+        html = html.Replace("__OSMD__", osmd);
+        html = html.Replace("__SCORE_JS__", scoreJs);
+        scoreWebView2.NavigateToString(html);
     }
 
     private string LoadHtml(string filename)
@@ -129,5 +152,16 @@ public partial class MainForm : Form
         using var stream = assembly.GetManifestResourceStream(resourceName)!;
         using var reader = new StreamReader(stream);
         return reader.ReadToEnd();
+    }
+
+    private void UpdateScore(string json)
+    {
+        if (InvokeRequired)
+        {
+            Invoke(() => UpdateScore(json));
+            return;
+        }
+        string escaped = json.Replace("\\", "\\\\").Replace("'", "\\'");
+        scoreWebView2.ExecuteScriptAsync($"updateScore('{escaped}')");
     }
 }

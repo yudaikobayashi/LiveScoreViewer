@@ -1,6 +1,10 @@
 function bang() {
+    let song = new LiveAPI("live_set");
+    const scaleRoot = song.get("root_note")[0];
+    const scaleName = song.get("scale_name")[0];
 
     let clip = new LiveAPI("live_set view detail_clip");
+    const clipStart = clip.get("start_time")[0];
 
     let raw = clip.call(
         "get_notes_extended",
@@ -18,5 +22,5 @@ function bang() {
         duration: note.duration
     }));
 
-    outlet(0, JSON.stringify(notes));
+    outlet(0, JSON.stringify({ notes, scaleRoot, scaleName, clipStart }));
 }
